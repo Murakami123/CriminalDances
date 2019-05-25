@@ -64,25 +64,34 @@ public class PlayerController : MonoBehaviour
 
     public async UniTask<bool> DebugShowAllCards(int totalPlayerCount)
     {
-        var players = new List<CDPlayer>();
-        switch (totalPlayerCount)
-        {
-            case 3: players.AddRange(playersAt3Match); break;
-            case 4: players.AddRange(playersAt4Match); break;
-            case 5: players.AddRange(playersAt5Match); break;
-            case 6: players.AddRange(playersAt6Match); break;
-            case 7: players.AddRange(playersAt7Match); break;
-            case 8: players.AddRange(playersAt8Match); break;
-        }
-        players.AddRange(playersAt3Match);
 
-        // 一人ずつ裏返して見えるようにする。
-        for (int i = 0; i < players.Count; i++)
+        // 全員分カード見せる
+        foreach (var player in playingPlayerTable)
         {
-            await players[i].ShowMeCards();
+            await player.Value.ShowMeCards();
         }
-
         return true;
+
+        // 全員分カード見せる_旧
+        // var players = new List<CDPlayer>();
+        // switch (totalPlayerCount)
+        // {
+        //     case 3: players.AddRange(playersAt3Match); break;
+        //     case 4: players.AddRange(playersAt4Match); break;
+        //     case 5: players.AddRange(playersAt5Match); break;
+        //     case 6: players.AddRange(playersAt6Match); break;
+        //     case 7: players.AddRange(playersAt7Match); break;
+        //     case 8: players.AddRange(playersAt8Match); break;
+        // }
+        // players.AddRange(playersAt3Match);
+
+        // // 一人ずつ裏返して見えるようにする。
+        // for (int i = 0; i < players.Count; i++)
+        // {
+        //     await players[i].ShowMeCards();
+        // }
+
+        // return true;
     }
 
     public async UniTask<bool> PlayNextTurn()
