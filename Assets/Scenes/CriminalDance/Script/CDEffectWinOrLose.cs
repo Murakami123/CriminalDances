@@ -19,16 +19,20 @@ public class CDEffectWinOrLose : MonoBehaviour
 
         // 演出終わった後に Close ボタンを押せるようにする。
         ActivateCloseBtn();
+
+        // 完了
         return true;
     }
 
     public async UniTask<bool> EffectLose()
     {
         gameObject.SetActive(true);
-        objWin.SetActive(false);
+        objLose.SetActive(false);
 
         // 演出終わった後に Close ボタンを押せるようにする。
         ActivateCloseBtn();
+
+        // 完了
         return true;
     }
 
@@ -37,12 +41,21 @@ public class CDEffectWinOrLose : MonoBehaviour
         CloseWinOrLoseWindow().Forget();
     }
 
+    private bool isEffectFinish = false;
+    public async UniTask<bool> WaitEffectComplete()
+    {
+        await UniTask.WaitUntil(() => isEffectFinish);
+        return true;
+    }
+
     //------------------------------------------------------------------
     // private
     //------------------------------------------------------------------
     private async UniTask<bool> CloseWinOrLoseWindow()
     {
         gameObject.SetActive(false);
+        // 演出完了フラグ。
+        isEffectFinish = true;
         return true;
     }
 

@@ -8,26 +8,59 @@ public class PlayerController : MonoBehaviour
     //------------------------------------------------------------------
     // public
     //------------------------------------------------------------------
+
+    /// 【重要】
+    /// ゲームを遊んでいるプレイヤー一覧。
+    /// 試合中プレイヤーのあがりが予想されるため、Listでなく プレイヤーNoをDicで保存。
+    /// Dictionary <n, プレイヤー(n)>。n=2 だったら プレイヤー2 を示す。
+    private Dictionary<int, CDPlayer> playingPlayerTable = new Dictionary<int, CDPlayer>();
+
+    // 引数：参加人数
+    // 処理：ゲーム参加プレイヤーテーブルを作成。
     public void Initialize(int totalPlayerCount)
     {
-
-    }
-
-    public CDPlayer[] GetPlayers(int totalPlayerCount)
-    {
+        CDPlayer[] targetArray = null;
         switch (totalPlayerCount)
         {
-            case 3: return playersAt3Match;
-            case 4: return playersAt4Match;
-            case 5: return playersAt5Match;
-            case 6: return playersAt6Match;
-            case 7: return playersAt7Match;
-            case 8: return playersAt8Match;
-            default:
-                Debug.LogError("totalPlayerCount:" + totalPlayerCount, this);
-                return playersAt3Match;
+            case 3: targetArray = playersAt3Match; break;
+            case 4: targetArray = playersAt4Match; break;
+            case 5: targetArray = playersAt5Match; break;
+            case 6: targetArray = playersAt6Match; break;
+            case 7: targetArray = playersAt7Match; break;
+            case 8: targetArray = playersAt8Match; break;
+            default: Debug.LogError("targetArray:" + targetArray); break; ;
         }
+        for (int i = 0; i < targetArray.Length; i++) playingPlayerTable.Add(i + 1, targetArray[i]);
+
     }
+
+    // プレイヤー全員が、ゲーム開始時にカードを引く。
+    public async UniTask<bool> DrawAllPlayersAtGameStart(CDBill cdBill)
+    {
+        foreach (var player in playingPlayerTable)
+        {
+            await player.Value.DrawCard(cdBill, drawCardCount: 4);
+        }
+        return true;
+    }
+
+    // // プレイ中の全員を返す。
+    // public CDPlayer[] GetPlayers(int totalPlayerCount)
+    // {
+    //     switch (totalPlayerCount)
+    //     {
+    //         case 3: return playersAt3Match;
+    //         case 4: return playersAt4Match;
+    //         case 5: return playersAt5Match;
+    //         case 6: return playersAt6Match;
+    //         case 7: return playersAt7Match;
+    //         case 8: return playersAt8Match;
+    //         default:
+    //             Debug.LogError("totalPlayerCount:" + totalPlayerCount, this);
+    //             return playersAt3Match;
+    //     }
+    // }
+
 
     public async UniTask<bool> DebugShowAllCards(int totalPlayerCount)
     {
@@ -51,6 +84,46 @@ public class PlayerController : MonoBehaviour
 
         return true;
     }
+
+    public async UniTask<bool> PlayNextTurn()
+    {
+
+        return true;
+    }
+
+
+
+    // private int cardEmitNo;
+    // private CDPlayer lastEmitPlayer;
+
+    public CDPlayer GetNextPlayer(int lastEmitPlayerNo)
+    {
+        CDPlayer nextPlayer = null;
+        int ifExistEmitPlayerNo; // もしこの番号の人が上がってなかったらこの人が出す。
+
+        ifExistEmitPlayerNo = lastEmitPlayerNo;
+        for (int i = 0; i < 8 /* ← 最大プレイ人数8のため */; i++)
+        {
+            ifExistEmitPlayerNo = +1;
+
+            // ifExistEmitPlayerNo が 8 を超えたら、またプレイヤー 1 から再チェック。
+            if (ifExistEmitPlayerNo > 8)
+            {
+                ifExistEmitPlayerNo = -8;
+            }
+
+            // 右周りの次（playerNo + 1）の人が存在してたら、その人が次の人。
+            if (playingPlayerTable.ContainsKey(ifExistEmitPlayerNo))
+            {
+                nextPlayer = playingPlayerTable[ifExistEmitPlayerNo];
+                return nextPlayer;
+            }
+        }
+
+        Debug.LogError("ifExistEmitPlayerNo:" + ifExistEmitPlayerNo + ", nextPlayer== null: " + nextPlayer == null);
+        return null;
+    }
+
 
     //------------------------------------------------------------------
     // private

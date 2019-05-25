@@ -21,37 +21,45 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         // 参加人数から山札の中身を確定させる。
         cdBill.SetBillData(playerTotalCount);
 
-        // 参加者にカードを配る。
-        var players = playerController.GetPlayers(playerTotalCount);
-        for (int i = 0; i < players.Length; i++)
-        {
-            await players[i].DrawCard(cdBill, drawCardCount: 4);
-        }
+        // 参加者全員がカードを引く。
+        playerController.Initialize(playerTotalCount);
+        await playerController.DrawAllPlayersAtGameStart(cdBill);
 
         // 手札を見るデバッグ機能
         await UniTask.Delay(500);
-        for (int i = 0; i < players.Length; i++)
-        {
-            Debug.Log("ShowMeCards");
-            await players[i].ShowMeCards();
-        }
+        await playerController.DebugShowAllCards(playerTotalCount);
+
+        // 1秒間、事件発生演出。
+        await effctIncident.EffectDayo(1f);
+
+        // for (int i = 0; i < players.Length; i++)
+        // {
+        //     Debug.Log("ShowMeCards");
+        //     await players[i].ShowMeCards();
+        // }
 
         // 第一発見者を持ってる人は出す。
         // 他の人は「待機中...」を出す。
 
 
         // あとはぐるぐるカードを出し続ける。
-        while (!isFinishGame())
-        {
-            // 詳細後で。
-            // await playerController.PlayNextTurn();
-        }
+        // while (!isFinishGame())
+        // {
+        //     // 詳細後で。
+        //     // await playerController.PlayNextTurn();
+        // }
+
+        // とりあえず3秒待って勝敗演出。
+        await UniTask.Delay(3000);
 
         // 自分の画面に、勝敗演出。
+        await effectWinOrLose.EffectWin();
+        await effectWinOrLose.WaitEffectComplete();
 
         // リトライしますか？
         // Yes: シーンを再ロード。
         // No : アプリケーションを終了。
+        await retryWindow.Open();
     }
 
 
@@ -65,7 +73,9 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
     public CardSpriteController spriteController; // 外からGetしかしないからpropertyにしたいけどInspectorから指定できなくなるから苦肉の策。
     [SerializeField] CDBill cdBill; // 山札
     [SerializeField] Text testText;
-
+    [SerializeField] CDEffectIncident effctIncident;
+    [SerializeField] CDEffectWinOrLose effectWinOrLose;
+    [SerializeField] GameRetryWindow retryWindow;
     private void SetPlayerCount(int npcCount)
     {
         playNpcCount = npcCount;
