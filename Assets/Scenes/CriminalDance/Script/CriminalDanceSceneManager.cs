@@ -43,7 +43,8 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         // あとはぐるぐるカードを出し続ける。
         while (!isFinishGame())
         {
-            await playerController.PlayNextTurn();
+            // 詳細後で。
+            // await playerController.PlayNextTurn();
         }
 
         // 自分の画面に、勝敗演出。
