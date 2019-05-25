@@ -48,10 +48,7 @@ public class CDEffectWinOrLose : MonoBehaviour
         return true;
     }
 
-    //------------------------------------------------------------------
-    // private
-    //------------------------------------------------------------------
-    private async UniTask<bool> CloseWinOrLoseWindow()
+    public async UniTask<bool> CloseWinOrLoseWindow()
     {
         gameObject.SetActive(false);
         // 演出完了フラグ。
@@ -59,6 +56,9 @@ public class CDEffectWinOrLose : MonoBehaviour
         return true;
     }
 
+    //------------------------------------------------------------------
+    // private
+    //------------------------------------------------------------------
     [SerializeField] GameObject closeBtn;
     private void ActivateCloseBtn()
     {

@@ -13,35 +13,48 @@ public class CDHandCard : UIMonoBehaviour
     //------------------------------------------------------------------
 
     /// カード情報セット。
-    public void SetCardData(CardData.CardType cardType){
+    public void SetCardData(CardData.CardType cardType)
+    {
         thisCardType = cardType;
     }
 
-    public void OnTap_DispCard( bool isDisp ){
-        if( isDisp ){
+    public void OnTap_DispCard(bool isDisp)
+    {
+        if (isDisp)
+        {
             ShowMeCard().Forget();
-        } else {
+        }
+        else
+        {
             TurnOverCard().Forget();
         }
     }
 
     /// 自分の画面上で、このカードの表が見えるようにする。【0.2秒】
-    public async UniRx.Async.UniTask ShowMeCard(){
+    public async UniRx.Async.UniTask ShowMeCard(bool isImmidiate = false)
+    {
         // y=90にして見えなくする。
         var rect = cardImage.rectTransform;
-        rect.DOLocalRotate(canNotShowRotate, 0.1f);
-        await UniTask.Delay(100);
+        if (!isImmidiate)
+        {
+            rect.DOLocalRotate(canNotShowRotate, 0.1f);
+            await UniTask.Delay(100);
+        }
 
         // 画像差し替え
-        cardImage.sprite = CriminalDanceSceneManager.Instance.spriteController.GetCardSprite( thisCardType );
+        cardImage.sprite = CriminalDanceSceneManager.Instance.spriteController.GetCardSprite(thisCardType);
 
         // y=0にして再び表示。
-        rect.DOLocalRotate(Vector3.zero, 0.1f);
-        await UniTask.Delay(100);
+        if (!isImmidiate)
+        {
+            rect.DOLocalRotate(Vector3.zero, 0.1f);
+            await UniTask.Delay(100);
+        }
     }
 
     /// 自分の画面上で、このカードの裏返して見えなくする。
-    public async UniRx.Async.UniTask TurnOverCard(){
+    public async UniRx.Async.UniTask TurnOverCard()
+    {
         // y=90にして見えなくする。
         var rect = cardImage.rectTransform;
         rect.DOLocalRotate(canNotShowRotate, 0.1f);
@@ -55,12 +68,30 @@ public class CDHandCard : UIMonoBehaviour
         await UniTask.Delay(100);
     }
 
+    public void Choice()
+    {
+
+    }
+    // 
+    public void DecisionIfCan()
+    {
+
+    }
+
+    public async UniTask<CDHandCard> Discard()
+    {
+        await ShowMeCard(isImmidiate: true);
+        await CriminalDanceSceneManager.Instance.discardBill.DiscardCard(this);
+        return this;
+    }
+
     //------------------------------------------------------------------
     // private
     //------------------------------------------------------------------
+    public CardData.CardType CardType { get { return thisCardType; } }
     private CardData.CardType thisCardType;
     [SerializeField] Image cardImage;
-    private readonly Vector3 canNotShowRotate = new Vector3( 0f, 90f, 0f);
+    private readonly Vector3 canNotShowRotate = new Vector3(0f, 90f, 0f);
 
 
 }

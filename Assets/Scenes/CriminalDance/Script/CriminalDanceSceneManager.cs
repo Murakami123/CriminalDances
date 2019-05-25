@@ -25,21 +25,23 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         playerController.Initialize(playerTotalCount);
         await playerController.DrawAllPlayersAtGameStart(cdBill);
 
-        // 手札を見るデバッグ機能
+        // // 全員の 手札を見るデバッグ機能
+        // await UniTask.Delay(500);
+        // await playerController.DebugShowAllCards(playerTotalCount);
+
+        // 自分だけの 手札を見る
         await UniTask.Delay(500);
-        await playerController.DebugShowAllCards(playerTotalCount);
+        await playerController.ShowPlayerCards();
+
+        // 第一発見者を持ってる人は出す。他の人は「待機中...」を出す。
+        await playerController.TmpActivateDispWaitingAll(true);
+        await UniTask.Delay(2500);
+        await playerController.Firstdiscovery();
+        await playerController.TmpActivateDispWaitingAll(false);
 
         // 1秒間、事件発生演出。
-        await effctIncident.EffectDayo(1f);
-
-        // for (int i = 0; i < players.Length; i++)
-        // {
-        //     Debug.Log("ShowMeCards");
-        //     await players[i].ShowMeCards();
-        // }
-
-        // 第一発見者を持ってる人は出す。
-        // 他の人は「待機中...」を出す。
+        await UniTask.Delay(1500);
+        await effctIncident.EffectDayo(2f);
 
 
         // あとはぐるぐるカードを出し続ける。
@@ -52,9 +54,14 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         // とりあえず3秒待って勝敗演出。
         await UniTask.Delay(3000);
 
-        // 自分の画面に、勝敗演出。
+        // （デバッグ）2秒後_自分の画面に、勝敗演出。
         await effectWinOrLose.EffectWin();
-        await effectWinOrLose.WaitEffectComplete();
+        await UniTask.Delay(2000);
+        await effectWinOrLose.CloseWinOrLoseWindow();
+
+        // // 自分の画面タッチするまで、勝敗演出。
+        // await effectWinOrLose.EffectWin();
+        // await effectWinOrLose.WaitEffectComplete();
 
         // リトライしますか？
         // Yes: シーンを再ロード。
@@ -76,6 +83,7 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
     [SerializeField] CDEffectIncident effctIncident;
     [SerializeField] CDEffectWinOrLose effectWinOrLose;
     [SerializeField] GameRetryWindow retryWindow;
+    public CDDiscardedBill discardBill;
     private void SetPlayerCount(int npcCount)
     {
         playNpcCount = npcCount;
@@ -140,11 +148,12 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
     // ※例外として、手札が探偵4枚、または探偵3枚犯人1枚の時、探偵カードを出すことができます。ただし探偵としての効果はありません。
 
     // [いぬ]
+    // (第三版で効果が変わりました。
+    // 手札に入れず、誰か1人の手札を1枚選びそれが犯人であるかどうかを確認します。全員に見せ、犯人なら勝ち、そうでないなら、戻します。)
+    // (旧効果)
     // 他のプレイヤーを1人指名してください。
     // 指名されたプレイヤーは手札を1枚捨てて、いぬカードを手札に入れてください。
     // 捨てられたカードが犯人カードの場合、いぬカードを出した人の勝利です。
-    // (第三版で効果が変わりました。
-    // 手札に入れず、誰か1人の手札を1枚選びそれが犯人であるかどうかを確認します。全員に見せ、犯人なら勝ち、そうでないなら、戻します。)
 
 
     // [目撃者]

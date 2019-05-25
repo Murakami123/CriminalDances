@@ -15,26 +15,12 @@ public class PlayerController : MonoBehaviour
     /// Dictionary <n, プレイヤー(n)>。n=2 だったら プレイヤー2 を示す。
     private Dictionary<int, CDPlayer> playingPlayerTable = new Dictionary<int, CDPlayer>();
 
-    // 引数：参加人数
-    // 処理：ゲーム参加プレイヤーテーブルを作成。
     public void Initialize(int totalPlayerCount)
     {
-        CDPlayer[] targetArray = null;
-        switch (totalPlayerCount)
-        {
-            case 3: targetArray = playersAt3Match; break;
-            case 4: targetArray = playersAt4Match; break;
-            case 5: targetArray = playersAt5Match; break;
-            case 6: targetArray = playersAt6Match; break;
-            case 7: targetArray = playersAt7Match; break;
-            case 8: targetArray = playersAt8Match; break;
-            default: Debug.LogError("targetArray:" + targetArray); break; ;
-        }
-        for (int i = 0; i < targetArray.Length; i++) playingPlayerTable.Add(i + 1, targetArray[i]);
-
+        SetPlayerDates(totalPlayerCount);
     }
 
-    // プレイヤー全員が、ゲーム開始時にカードを引く。
+    // ゲーム開始時__プレイヤー全員がカードを引く。
     public async UniTask<bool> DrawAllPlayersAtGameStart(CDBill cdBill)
     {
         foreach (var player in playingPlayerTable)
@@ -44,66 +30,68 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
-    // // プレイ中の全員を返す。
-    // public CDPlayer[] GetPlayers(int totalPlayerCount)
-    // {
-    //     switch (totalPlayerCount)
-    //     {
-    //         case 3: return playersAt3Match;
-    //         case 4: return playersAt4Match;
-    //         case 5: return playersAt5Match;
-    //         case 6: return playersAt6Match;
-    //         case 7: return playersAt7Match;
-    //         case 8: return playersAt8Match;
-    //         default:
-    //             Debug.LogError("totalPlayerCount:" + totalPlayerCount, this);
-    //             return playersAt3Match;
-    //     }
-    // }
-
-
-    public async UniTask<bool> DebugShowAllCards(int totalPlayerCount)
+    ///  カード引いたのち__プレイヤーが人間のカードのみ見えるようにする。
+    public async UniTask<bool> ShowPlayerCards()
     {
+        foreach (var player in playingPlayerTable)
+        {
+            if (player.Value.isHuman)
+            {
+                await player.Value.ShowMeCards();
+            }
+        }
+        return true;
+    }
 
+    // （デバッグ機能）カード引いたのち__全員分のカードを見せる
+    public async UniTask<bool> DebugShowAllCards()
+    {
         // 全員分カード見せる
         foreach (var player in playingPlayerTable)
         {
             await player.Value.ShowMeCards();
         }
         return true;
-
-        // 全員分カード見せる_旧
-        // var players = new List<CDPlayer>();
-        // switch (totalPlayerCount)
-        // {
-        //     case 3: players.AddRange(playersAt3Match); break;
-        //     case 4: players.AddRange(playersAt4Match); break;
-        //     case 5: players.AddRange(playersAt5Match); break;
-        //     case 6: players.AddRange(playersAt6Match); break;
-        //     case 7: players.AddRange(playersAt7Match); break;
-        //     case 8: players.AddRange(playersAt8Match); break;
-        // }
-        // players.AddRange(playersAt3Match);
-
-        // // 一人ずつ裏返して見えるようにする。
-        // for (int i = 0; i < players.Count; i++)
-        // {
-        //     await players[i].ShowMeCards();
-        // }
-
-        // return true;
     }
+
+    /// ゲームスタート__第一発見者が事件を見つける。
+    public async UniTask<bool> Firstdiscovery()
+    {
+        Debug.Log("Firstdiscovery");
+
+        // 対象は第一発見者。
+        var targetType = CardData.CardType.FirstDiscoverer;
+
+        // 対象者以外待機中。
+        foreach (var player in playingPlayerTable.Values)
+        {
+            Debug.Log("aaaaaaaa");
+            if (!player.IsPosseCardByType(targetType)) player.DispWaiting(true);
+        }
+        Debug.Log("bbbbb");
+
+        // 対象者がカード決定するまで待ち。
+        foreach (var player in playingPlayerTable.Values)
+        {
+            Debug.Log("cccc");
+            if (player.IsPosseCardByType(targetType))
+            {
+                Debug.Log("ddddd");
+                player.DispWaiting(false);
+                await player.Discard_FirstDiscover();
+                // await UniTask.WaitUntil(() => player.isEmitCardDecision);
+                Debug.Log("ddddd");
+            }
+        }
+        return true;
+    }
+
 
     public async UniTask<bool> PlayNextTurn()
     {
 
         return true;
     }
-
-
-
-    // private int cardEmitNo;
-    // private CDPlayer lastEmitPlayer;
 
     public CDPlayer GetNextPlayer(int lastEmitPlayerNo)
     {
@@ -133,6 +121,16 @@ public class PlayerController : MonoBehaviour
         return null;
     }
 
+    /// 演出の際など 一時的に、全ユーザの「待機中...」を非表示。
+    public async UniTask<bool> TmpActivateDispWaitingAll(bool isDisp)
+    {
+        foreach (var player in playingPlayerTable.Values)
+        {
+            player.TmpActivateDispWait(isDisp);
+        }
+        return true;
+    }
+
 
     //------------------------------------------------------------------
     // private
@@ -144,6 +142,27 @@ public class PlayerController : MonoBehaviour
     [SerializeField] CDPlayer[] playersAt7Match; // 7人対戦の時
     [SerializeField] CDPlayer[] playersAt8Match; // 8人対戦の時
 
+    // 引数：参加人数
+    // 処理：ゲーム参加プレイヤーテーブルを作成。
+    private void SetPlayerDates(int totalPlayerCount)
+    {
+        // テーブル作成
+        CDPlayer[] targetArray = null;
+        switch (totalPlayerCount)
+        {
+            case 3: targetArray = playersAt3Match; break;
+            case 4: targetArray = playersAt4Match; break;
+            case 5: targetArray = playersAt5Match; break;
+            case 6: targetArray = playersAt6Match; break;
+            case 7: targetArray = playersAt7Match; break;
+            case 8: targetArray = playersAt8Match; break;
+            default: Debug.LogError("targetArray:" + targetArray); break; ;
+        }
+        for (int i = 0; i < targetArray.Length; i++) playingPlayerTable.Add(i + 1, targetArray[i]);
 
+        // NPC か否か雑にセット。
+        var humanPlayrNo = 1;
+        playingPlayerTable[humanPlayrNo].SetIsHuman(true);
+    }
 
 }
