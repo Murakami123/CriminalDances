@@ -58,7 +58,7 @@ public class CDPlayer : MonoBehaviour
     /// 演出の際など 一時的に「待機中...」を非表示。
     public void TmpActivateDispWait(bool isDisp)
     {
-        objWaiting.SetActive(isDisp);
+        // objWaiting.SetActive(isDisp);
         objWaiting.GetComponent<Text>().enabled = isDisp;
     }
 
