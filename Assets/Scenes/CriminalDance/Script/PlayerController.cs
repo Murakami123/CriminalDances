@@ -75,8 +75,11 @@ public class PlayerController : MonoBehaviour
             if (player.IsPosseCardByType(targetType))
             {
                 player.DispWaiting(false);
-                await player.Discard_FirstDiscover();
+                var targetCard = await player.Discard_FirstDiscover();
                 lastEmitPlayer = player;
+
+                Debug.Log("第一発見者を出し、所持カードから削除する暫定対応");
+                player.RemoveHundCardList(targetCard);
             }
         }
         return true;

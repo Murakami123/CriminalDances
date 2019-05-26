@@ -55,6 +55,13 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         await playerController.PlayNextTurn();
         await playerController.PlayNextTurn();
         await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
 
 
 

@@ -12,14 +12,15 @@ public class CDHandCard : UIMonoBehaviour
     // public
     //------------------------------------------------------------------
 
-    /// カード情報セット。
+    /// 山札から、カード情報セット。
     public void SetCardData(CardData.CardType cardType)
     {
         thisCardType = cardType;
     }
-
-    public void OnTap_Card(bool isDisp)
+    /// 配る際、持ち主情報セット。
+    public void SetOwner(CDPlayer owner)
     {
+        thisCardOwner = owner;
     }
 
     /// 自分の画面上で、このカードの表が見えるようにする。【0.2秒】
@@ -60,28 +61,47 @@ public class CDHandCard : UIMonoBehaviour
         await UniTask.Delay(100);
     }
 
-    public void Choice()
+    public void OnTap_Card(bool isDisp)
     {
-
+        Decision();
     }
+
+    // public void Choice()
+    // {
+
+    // }
     // 
     public void Decision()
     {
-        if (canDiscard)
+        if (canDiscardType)
         {
+            if (canDiscardTiming)
+            {
+                thisCardOwner.SetLastEmitCard(this);
+                Debug.Log(" このカードを出すことにした。thisCardType: " + thisCardType);
 
+            }
+            else
+            {
+                Debug.Log(" 今のタイミングでカードだせない。");
+
+            }
         }
         else
         {
-            Debug.Log(" 現在このカードは出せない。");
+            Debug.Log(" 現在このタイプのカードだせない。");
         }
-
     }
 
-    private bool canDiscard;
-    public void SetCanDiscard(bool _canDiscard)
+    private bool canDiscardType; // 現在出せるカードのタイプか否か。
+    private bool canDiscardTiming; // 現在カードを出せるタイミングが否か。
+    public void SetCanDiscardType(bool _canDiscardType)
     {
-        canDiscard = _canDiscard;
+        canDiscardType = _canDiscardType;
+    }
+    public void SetCanDiscardTiming(bool _canDiscardTiming)
+    {
+        canDiscardTiming = _canDiscardTiming;
     }
 
     public async UniTask<CDHandCard> Discard()
@@ -136,8 +156,10 @@ public class CDHandCard : UIMonoBehaviour
     //------------------------------------------------------------------
     // private
     //------------------------------------------------------------------
-    public CardData.CardType CardType { get { return thisCardType; } }
     private CardData.CardType thisCardType;
+    public CardData.CardType CardType { get { return thisCardType; } }
+    private CDPlayer thisCardOwner;
+    // public CDPlayer CardOwner { get { return thisCardOwner; } }
     [SerializeField] Image cardImage;
     private readonly Vector3 canNotShowRotate = new Vector3(0f, 90f, 0f);
 
