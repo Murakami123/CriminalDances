@@ -15,6 +15,10 @@ public class PlayerController : MonoBehaviour
     /// Dictionary <n, プレイヤー(n)>。n=2 だったら プレイヤー2 を示す。
     private Dictionary<int, CDPlayer> playingPlayerTable = new Dictionary<int, CDPlayer>();
 
+    /// 【重要】
+    /// 右回りの順序で、最後にカードを出したプレイヤー
+    private CDPlayer lastEmitPlayer = new CDPlayer();
+
     public void Initialize(int totalPlayerCount)
     {
         SetPlayerDates(totalPlayerCount);
@@ -62,25 +66,17 @@ public class PlayerController : MonoBehaviour
         // 対象は第一発見者。
         var targetType = CardData.CardType.FirstDiscoverer;
 
-        // 対象者以外待機中。
-        foreach (var player in playingPlayerTable.Values)
-        {
-            Debug.Log("aaaaaaaa");
-            if (!player.IsPosseCardByType(targetType)) player.DispWaiting(true);
-        }
-        Debug.Log("bbbbb");
+        // 全員待機中表示。
+        await AllPlayerDispWaiting(true);
 
         // 対象者がカード決定するまで待ち。
         foreach (var player in playingPlayerTable.Values)
         {
-            Debug.Log("cccc");
             if (player.IsPosseCardByType(targetType))
             {
-                Debug.Log("ddddd");
                 player.DispWaiting(false);
                 await player.Discard_FirstDiscover();
-                // await UniTask.WaitUntil(() => player.isEmitCardDecision);
-                Debug.Log("ddddd");
+                lastEmitPlayer = player;
             }
         }
         return true;
@@ -89,47 +85,68 @@ public class PlayerController : MonoBehaviour
 
     public async UniTask<bool> PlayNextTurn()
     {
-
+        var nextPlayer = GetNextPlayer();
+        await nextPlayer.Discard();
+        lastEmitPlayer = nextPlayer;
         return true;
     }
 
-    public CDPlayer GetNextPlayer(int lastEmitPlayerNo)
+    public CDPlayer GetNextPlayer()
     {
-        CDPlayer nextPlayer = null;
-        int ifExistEmitPlayerNo; // もしこの番号の人が上がってなかったらこの人が出す。
-
-        ifExistEmitPlayerNo = lastEmitPlayerNo;
-        for (int i = 0; i < 8 /* ← 最大プレイ人数8のため */; i++)
+        // 最後に出した人のプレイヤーNo。
+        int lastEmitPlayerNo = 0;
+        foreach (var player in playingPlayerTable)
         {
-            ifExistEmitPlayerNo = +1;
-
-            // ifExistEmitPlayerNo が 8 を超えたら、またプレイヤー 1 から再チェック。
-            if (ifExistEmitPlayerNo > 8)
+            if (player.Value == lastEmitPlayer)
             {
-                ifExistEmitPlayerNo = -8;
-            }
-
-            // 右周りの次（playerNo + 1）の人が存在してたら、その人が次の人。
-            if (playingPlayerTable.ContainsKey(ifExistEmitPlayerNo))
-            {
-                nextPlayer = playingPlayerTable[ifExistEmitPlayerNo];
-                return nextPlayer;
+                lastEmitPlayerNo = player.Key;
             }
         }
 
-        Debug.LogError("ifExistEmitPlayerNo:" + ifExistEmitPlayerNo + ", nextPlayer== null: " + nextPlayer == null);
+        // 次に出す人のプレイヤーNo。
+        int nextPlayerNo = lastEmitPlayerNo + 1;
+        for (int i = 0; i < 8 /* ← 最大プレイ人数8のため */; i++)
+        {
+            // 右周りの次（playerNo + 1）の人が存在してたら、その人が次の人。
+            if (playingPlayerTable.ContainsKey(nextPlayerNo))
+            {
+                var nextPlayer = playingPlayerTable[nextPlayerNo];
+                return nextPlayer;
+            }
+            else
+            {
+                Debug.Log("あがり済みか、存在しない nextPlayerNo:" + nextPlayerNo);
+                nextPlayerNo += 1;
+
+                // ifExistEmitPlayerNo が 8 を超えたら、またプレイヤー 1 から再チェック。
+                if (nextPlayerNo > 8) nextPlayerNo -= 8;
+            }
+        }
+
+        // あああああ
+        Debug.LogError("ここに来るはずないはず");
         return null;
     }
 
-    /// 演出の際など 一時的に、全ユーザの「待機中...」を非表示。
-    public async UniTask<bool> TmpActivateDispWaitingAll(bool isDisp)
+    /// 全員「待機中...」を表示。
+    public async UniTask<bool> AllPlayerDispWaiting(bool isDisp)
     {
         foreach (var player in playingPlayerTable.Values)
         {
-            player.TmpActivateDispWait(isDisp);
+            player.DispWaiting(isDisp);
         }
         return true;
     }
+
+    // /// 演出の際など 一時的に、全ユーザの「待機中...」を非表示。
+    // public async UniTask<bool> TmpActivateDispWaitingAll(bool isDisp)
+    // {
+    //     foreach (var player in playingPlayerTable.Values)
+    //     {
+    //         player.TmpActivateDispWait(isDisp);
+    //     }
+    //     return true;
+    // }
 
 
     //------------------------------------------------------------------

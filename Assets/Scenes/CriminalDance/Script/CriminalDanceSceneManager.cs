@@ -34,15 +34,14 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         await playerController.ShowPlayerCards();
 
         // 第一発見者を持ってる人は出す。他の人は「待機中...」を出す。
-        await playerController.TmpActivateDispWaitingAll(true);
+        // await playerController.TmpActivateDispWaitingAll(true);
         await UniTask.Delay(2500);
         await playerController.Firstdiscovery();
-        await playerController.TmpActivateDispWaitingAll(false);
+        // await playerController.TmpActivateDispWaitingAll(false);
 
         // 1秒間、事件発生演出。
         await UniTask.Delay(1500);
         await effctIncident.EffectDayo(2f);
-
 
         // あとはぐるぐるカードを出し続ける。
         // while (!isFinishGame())
@@ -50,6 +49,14 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         //     // 詳細後で。
         //     // await playerController.PlayNextTurn();
         // }
+
+        // 雑に動かす。
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+        await playerController.PlayNextTurn();
+
+
 
         // とりあえず3秒待って勝敗演出。
         await UniTask.Delay(3000);

@@ -34,7 +34,7 @@ public class CDPlayer : MonoBehaviour
         for (int i = 0; i < hundCards.Count; i++)
         {
             // Debug.Log("ShowMeCard");
-            await hundCards[i].ShowMeCard();
+            await hundCards[i].ShowCardToHuman();
         }
         return true;
     }
@@ -44,42 +44,16 @@ public class CDPlayer : MonoBehaviour
     public void DispWaiting(bool isDisp)
     {
         objWaiting.SetActive(isDisp);
-
-        if (isDisp)
-        {
-
-        }
-        else
-        {
-
-        }
     }
 
-    /// 演出の際など 一時的に「待機中...」を非表示。
-    public void TmpActivateDispWait(bool isDisp)
-    {
-        // objWaiting.SetActive(isDisp);
-        objWaiting.GetComponent<Text>().enabled = isDisp;
-    }
+    // /// 演出の際など 一時的に「待機中...」を非表示。
+    // public void TmpActivateDispWait(bool isDisp)
+    // {
+    //     // objWaiting.SetActive(isDisp);
+    //     objWaiting.GetComponent<Text>().enabled = isDisp;
+    // }
 
-    /// カードを出す。
-    public async UniTask<bool> Discard_FirstDiscover()
-    {
-        var targetCard = GetCardByType(CardData.CardType.FirstDiscoverer);
-        await targetCard.Discard();
-        return true;
-    }
-
-    public void OnTap_Card()
-    {
-
-    }
-
-    public void EmitCard()
-    {
-
-    }
-
+    // 引数のタイプのカードを持っているか
     public bool IsPosseCardByType(CardData.CardType type)
     {
         for (int i = 0; i < hundCards.Count; i++)
@@ -92,7 +66,7 @@ public class CDPlayer : MonoBehaviour
         return false;
     }
 
-
+    // 引数のタイプのカードを持っていたら返す。
     public CDHandCard GetCardByType(CardData.CardType type)
     {
         if (IsPosseCardByType(type))
@@ -117,6 +91,68 @@ public class CDPlayer : MonoBehaviour
 
 
 
+    /// 現在出すことのできるカードタイプ。
+    // （第一発見者、犯人、探偵などは特定のタイミングでしか出せない）
+    private List<CardData.CardType> discardableType = new List<CardData.CardType>();
+    public void SetDiscardableType(CardData.CardType[] canDiscardTypes)
+    {
+        discardableType.Clear();
+        for (int i = 0; i < canDiscardTypes.Length; i++)
+        {
+            discardableType.Add(canDiscardTypes[i]);
+        }
+    }
+
+    public void ResetDiscardableType()
+    {
+        discardableType.Clear();
+        foreach (var type in System.Enum.GetValues(typeof(CardData.CardType)))
+        {
+            discardableType.Add((CardData.CardType)type);
+        }
+    }
+
+
+
+    /// プレイヤーがカードを選んで出す。（必要なら出せるタイプは先にセットしておく）
+    public async UniTask<bool> Discard()
+    {
+        CDHandCard targetCard = null;
+        if (isHuman)
+        {
+            Debug.Log("このプレイヤーは人、カード決定を待つ。");
+
+
+        }
+        else
+        {
+            Debug.Log("このプレイヤーはNPC、適当にカードを選ぶ。");
+            targetCard = hundCards[Random.Range(0, hundCards.Count)];
+            await targetCard.Discard();
+            await UniTask.WaitUntil(() => GetBBB());
+        }
+
+        // 出したらそのカードは削除。
+        RemoveHundCardList(targetCard);
+        return true;
+    }
+
+    private bool GetBBB()
+    {
+        return true;
+    }
+
+    //------------------------------------------------------------------
+    // public_カードの効果。
+    //------------------------------------------------------------------
+    /// 第一発見者_ゲーム開始時、強制で出さなきゃいけない。
+    public async UniTask<bool> Discard_FirstDiscover()
+    {
+        var targetCard = GetCardByType(CardData.CardType.FirstDiscoverer);
+        await targetCard.Discard();
+        return true;
+    }
+
 
     //------------------------------------------------------------------
     // private
@@ -132,6 +168,17 @@ public class CDPlayer : MonoBehaviour
         isHuman = _isHuman;
     }
 
+    private void RemoveHundCardList(CDHandCard hundCard)
+    {
+        if (hundCards.Contains(hundCard))
+        {
+            hundCards.Remove(hundCard);
+        }
+        else
+        {
+            Debug.LogError("このカードは所持カードリストにない。hundCard：" + hundCard + ", hundCard.CardType:" + hundCard.CardType);
+        }
+    }
 
 
 
