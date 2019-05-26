@@ -13,6 +13,9 @@ public class CDDiscardedBill : MonoBehaviour
     {
         var rect = discardCard.GetComponent<RectTransform>();
 
+        // この捨て札配下にする。        
+        discardCard.transform.SetParent(transform, true);
+
         // カードを置く位置
         var randomPos = new Vector3(
             transform.position.x + Random.Range(-posThreshold, posThreshold),
@@ -21,10 +24,14 @@ public class CDDiscardedBill : MonoBehaviour
         );
         rect.DOMove(randomPos, duraDiscard);
 
-        // // カードを置く際の回転
+        // カードを置く際の回転
         var rotateZ = Random.Range(-30f, 30f);
         var ratate = new Vector3(0f, 0f, rotateZ);
         rect.DORotate(ratate, duraDiscard);
+
+        // カード大きさ統一
+        // discardCard.transform.DOScale(Vector3.one, duraDiscard);
+        rect.DOScale(Vector3.one, duraDiscard);
 
         await UniTask.Delay((int)(duraDiscard * 1000));
         return true;
