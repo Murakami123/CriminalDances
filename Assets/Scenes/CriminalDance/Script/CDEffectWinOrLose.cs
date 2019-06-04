@@ -12,6 +12,7 @@ public class CDEffectWinOrLose : MonoBehaviour
     //------------------------------------------------------------------
     [SerializeField] GameObject objWin;
     [SerializeField] GameObject objLose;
+    [SerializeField] GameObject objBystander;
     public async UniTask<bool> EffectWin()
     {
         gameObject.SetActive(true);
@@ -28,6 +29,18 @@ public class CDEffectWinOrLose : MonoBehaviour
     {
         gameObject.SetActive(true);
         objLose.SetActive(false);
+
+        // 演出終わった後に Close ボタンを押せるようにする。
+        ActivateCloseBtn();
+
+        // 完了
+        return true;
+    }
+
+    public async UniTask<bool> EffectBystander()
+    {
+        gameObject.SetActive(true);
+        objBystander.SetActive(false);
 
         // 演出終わった後に Close ボタンを押せるようにする。
         ActivateCloseBtn();
