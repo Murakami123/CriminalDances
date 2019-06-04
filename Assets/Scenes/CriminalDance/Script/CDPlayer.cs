@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using UniRx.Async;
+using System;
 
 /// Player 一人当たりのカード所持位置を管理。
 public class CDPlayer : MonoBehaviour
@@ -40,19 +41,11 @@ public class CDPlayer : MonoBehaviour
         return true;
     }
 
-
     /// 待機中を出す、消す（待機中はカードを出すことができない）
     public void DispWaiting(bool isDisp)
     {
         objWaiting.SetActive(isDisp);
     }
-
-    // /// 演出の際など 一時的に「待機中...」を非表示。
-    // public void TmpActivateDispWait(bool isDisp)
-    // {
-    //     // objWaiting.SetActive(isDisp);
-    //     objWaiting.GetComponent<Text>().enabled = isDisp;
-    // }
 
     // 引数のタイプのカードを持っているか
     public bool IsPosseCardByType(CardData.CardType type)
@@ -90,16 +83,76 @@ public class CDPlayer : MonoBehaviour
         }
     }
 
+    private void UpdateCanDiscardType()
+    {
+        // 最初にリセット
+        ResetCanDiscardTypeCards();
+
+        // まず全種類のカードを出せる仮定
+        var allCardTypeList = new List<CardData.CardType>();
+        {
+            var i = 0;
+            foreach (var type in Enum.GetValues(typeof(CardData.CardType)))
+            {
+                allCardTypeList.Add((CardData.CardType)type);
+                i++;
+            }
+        }
+        Debug.Log("allCardTypeList.Count：" + allCardTypeList.Count);
+
+        // 探偵_残り4枚以上で出せない。
+        if (hundCards.Count >= 4)
+        {
+            for (int i = 0; i < allCardTypeList.Count; i++)
+            {
+                if (allCardTypeList[i] == CardData.CardType.Detective)
+                {
+                    allCardTypeList.Remove(allCardTypeList[i]);
+                    Debug.Log("ああああ");
+                }
+            }
+        }
+        Debug.Log("allCardTypeList.Count：" + allCardTypeList.Count);
+
+        // 犯人_残り2枚以上で出せない。
+        if (hundCards.Count >= 2)
+        {
+            for (int i = 0; i < allCardTypeList.Count; i++)
+            {
+                if (allCardTypeList[i] == CardData.CardType.Criminal)
+                {
+                    allCardTypeList.Remove(allCardTypeList[i]);
+                    Debug.Log("いいいい");
+                }
+            }
+        }
+        Debug.Log("allCardTypeList.Count：" + allCardTypeList.Count);
+
+        // 他全部いつでも出せる
+        // カード情報更新
+        SetCanDiscardTypeCards(allCardTypeList.ToArray());
+    }
+
     /// 現在出すことのできるカードタイプ。
     // （第一発見者、犯人、探偵などは特定のタイミングでしか出せない）
-    public void SetCanDiscardTypeCards(CardData.CardType[] canDiscardTypes)
+    private void SetCanDiscardTypeCards(CardData.CardType[] canDiscardTypes)
     {
+        //  一旦falseにする
+        for (int i = 0; i < hundCards.Count; i++)
+        {
+            hundCards[i].SetCanDiscardType(false);
+        }
+
+        // 該当カードのみ true にする
         for (int i = 0; i < canDiscardTypes.Length; i++)
         {
             for (int j = 0; j < hundCards.Count; j++)
             {
                 var canDiscard = (canDiscardTypes[i] == hundCards[j].CardType);
-                hundCards[j].SetCanDiscardType(canDiscard);
+                if (canDiscard)
+                {
+                    hundCards[j].SetCanDiscardType(canDiscard);
+                }
             }
         }
     }
@@ -125,42 +178,39 @@ public class CDPlayer : MonoBehaviour
     /// プレイヤーがカードを選んで出す。（必要なら出せるタイプは先にセットしておく）
     public async UniTask<bool> Discard()
     {
-        CDHandCard targetCard = null;
+
+        // 出すカードを確定させる
+        // CDHandCard targetCard = null;
         if (isHuman)
         {
             Debug.Log("このプレイヤーは人、カード決定を待つ。");
 
-            Debug.Log("仮で全種類のカード出せる状況");
-            ResetCanDiscardTypeCards();
+            // 出せるカード出せないカード判定
+
+            UpdateCanDiscardType();
 
             SetCanDiscardTiming(true); // カードを選択できるタイミングである。
-            await UniTask.WaitUntil(() => (lastDecisionCard != null)); // カード決定まで待ち。
-            targetCard = lastDecisionCard;
-            Debug.Log("lastDecisionCard.CardType：" + lastDecisionCard.CardType);
+            await UniTask.WaitUntil(() => (decisionCard != null)); // カード決定まで待ち。
             SetCanDiscardTiming(false); // カードを選択できるタイミング終わり。
         }
         else
         {
             Debug.Log("このプレイヤーはNPC、適当にカードを選ぶ。");
-            targetCard = hundCards[Random.Range(0, hundCards.Count)];
+            decisionCard = hundCards[UnityEngine.Random.Range(0, hundCards.Count)];
         }
 
         // 出したらそのカードは削除。
-        await targetCard.Discard();
-        lastDecisionCard = null; // ここで消すのはおかしい気がする仮。
-        RemoveHundCardList(targetCard);
+        await decisionCard.Discard();
+        RemoveHundCardList(decisionCard);
+        decisionCard = null; // カード出し終えたので消す。
         return true;
     }
 
-    private CDHandCard lastDecisionCard; // 最後に出したカード。
-    public void SetLastEmitCard(CDHandCard card)
+    private CDHandCard decisionCard; // 出すことを決めたカード。
+    public void SetDecisionCard(CDHandCard card)
     {
-        lastDecisionCard = card;
+        decisionCard = card;
     }
-    // public CDHandCard GetLastEmitCard()
-    // {
-    //     return lastDecisionCard;
-    // }
 
     //------------------------------------------------------------------
     // public_カードの効果。

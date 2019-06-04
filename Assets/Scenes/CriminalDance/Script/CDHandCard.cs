@@ -65,31 +65,23 @@ public class CDHandCard : UIMonoBehaviour
     {
         Decision();
     }
-
-    // public void Choice()
-    // {
-
-    // }
-    // 
     public void Decision()
     {
-        if (canDiscardType)
+        if (canDiscardTiming)
         {
-            if (canDiscardTiming)
+            if (canDiscardType)
             {
-                thisCardOwner.SetLastEmitCard(this);
+                thisCardOwner.SetDecisionCard(this);
                 Debug.Log(" このカードを出すことにした。thisCardType: " + thisCardType);
-
             }
             else
             {
-                Debug.Log(" 今のタイミングでカードだせない。");
-
+                Debug.Log("現在このタイプのカードだせない。");
             }
         }
         else
         {
-            Debug.Log(" 現在このタイプのカードだせない。");
+            Debug.Log(" 今のタイミングでカードだせない。");
         }
     }
 
@@ -98,10 +90,33 @@ public class CDHandCard : UIMonoBehaviour
     public void SetCanDiscardType(bool _canDiscardType)
     {
         canDiscardType = _canDiscardType;
+        UpdateCardColor();
     }
     public void SetCanDiscardTiming(bool _canDiscardTiming)
     {
         canDiscardTiming = _canDiscardTiming;
+        UpdateCardColor();
+    }
+
+    private Color greeColor = new Color(126f / 255f, 126f / 255f, 126f / 255f, 255f / 255f);
+    private Color halfClearColor = new Color(1f, 1f, 1f, 146f / 255f);
+    private void UpdateCardColor()
+    {
+        if (canDiscardTiming)
+        {
+            if (canDiscardType)
+            {
+                cardImage.color = Color.white;
+            }
+            else
+            {
+                cardImage.color = greeColor;
+            }
+        }
+        else
+        {
+            cardImage.color = halfClearColor;
+        }
     }
 
     public async UniTask<CDHandCard> Discard()
