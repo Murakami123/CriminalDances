@@ -51,6 +51,9 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         // }
 
         // 雑に動かす。
+        // while (isMatchFinish)
+        // {
+        // }
         await playerController.PlayNextTurn();
         await playerController.PlayNextTurn();
         await playerController.PlayNextTurn();
@@ -69,7 +72,7 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         await UniTask.Delay(3000);
 
         // （デバッグ）2秒後_自分の画面に、勝敗演出。
-        await effectWinOrLose.EffectWin();
+        await effectWinOrLose.EffectMatchFinish(myFinishType);
         await UniTask.Delay(2000);
         await effectWinOrLose.CloseWinOrLoseWindow();
 
@@ -83,10 +86,15 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         await retryWindow.Open();
     }
 
+    public void SetPlayerFinishType(PlayerFinishType finishType)
+    {
+        myFinishType = finishType;
+    }
 
     //------------------------------------------------------------------
     // private
     //------------------------------------------------------------------
+    public PlayerFinishType myFinishType = PlayerFinishType.Bystander;
     public int playNpcCount { get; private set; }
     public int playerTotalCount { get; private set; }
     [SerializeField] CDWindowGameStart windowGameStart;
@@ -119,6 +127,9 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
         // 全員がすべてのカードを出し終えたらゲーム終わり。
 
     }
+
+
+
 
     // カードを準備したらよくシャッフルして、各プレイヤーに4枚ずつくばります。
     // 手札に第一発見者を持っているプレイヤーが第一発見者カードを出して、ゲームが始まります。
@@ -206,4 +217,14 @@ public class CriminalDanceSceneManager : SingletonMonoBehaviour<CriminalDanceSce
 
 
 
+}
+
+//------------------------------------------------------------------
+// プレイヤーの勝ち負け情報。デフォ傍観。
+//------------------------------------------------------------------
+public enum PlayerFinishType
+{
+    Bystander,
+    Win,
+    Lose
 }

@@ -199,8 +199,21 @@ public class CDPlayer : MonoBehaviour
             decisionCard = hundCards[UnityEngine.Random.Range(0, hundCards.Count)];
         }
 
-        // 出したらそのカードは削除。
-        await decisionCard.Discard();
+        // カード出す。
+        var discardedCard = await decisionCard.Discard();
+        switch (discardedCard.CardType)
+        {
+            // 犯人出した！私の勝ち！
+            case CardData.CardType.Criminal:
+                if (isHuman)
+                {
+                    CriminalDanceSceneManager.Instance.SetPlayerFinishType(PlayerFinishType.Win);
+                }
+                break;
+
+            default: break;
+        }
+
         RemoveHundCardList(decisionCard);
         decisionCard = null; // カード出し終えたので消す。
         return true;
@@ -211,6 +224,8 @@ public class CDPlayer : MonoBehaviour
     {
         decisionCard = card;
     }
+
+
 
     //------------------------------------------------------------------
     // public_カードの効果。
